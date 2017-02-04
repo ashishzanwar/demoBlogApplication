@@ -4,7 +4,7 @@ var controller = {
         Article.getArticleList(req.body, res.callback);
     },
 
-    getHighestComments:function(res, res){
+    getHighestComments:function(req, res){
         Article.getHighestComments(req.body, res.callback);
     },
 

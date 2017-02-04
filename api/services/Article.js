@@ -18,7 +18,7 @@ var schema = new Schema({
         }
     }],
     comment: [{
-        comentBy: {
+        commentedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
@@ -101,38 +101,120 @@ var model = {
 
     },
 
+    //To get highest comments 
     getHighestComments: function(reqbody, callback){
-        var totalComments = 0;
-        var highest = 0;
+        var response = {}
+        response.highestComments = 0;
         var resObject = {
             message: "",
             statusCode: -1,
-            result: {}
+            result: []
         };
 
-        Article.count().exec(function(err, result){
-            if(err){
-                resObject.message = err;
-                callback(err, resObject);
-             }else if(result != null || result != undefined){
-                 totalComments = result;
-             }
+        Article.find().exec(function(error, record){
+            if(error){
+                resObject.message = error;
+                callback(error,resObject);
+            }else if(record.length>0){
+                var arrayLength = record.length;
+                var counter = 0;
 
-             _.forEach(Article, function(value){
-                 if(value.text.length > totalComments)
-                 {                     
-                    totalComments = value.text.length;
-                    article_id = value._id;
-                 }
-             })
-            
+                _.forEach(record, function(value){
+                    if(value.comment.length >= response.highestComments)
+                    {         
+                        if(value.comment.length > response.highestComments){
+                            response.highestComments = value.comment.length;
+                            response.article = value;
+                            resObject.result.push(response);
+                        }else if(value.comment.length == response.highestComments){
+                            response.highestComments = value.comment.length;
+                            response.article = value;
+                            resObject.result.push(response);
+                        }            
+                        
+                    }
+                    counter++;
 
-        });
+                    if(counter == arrayLength){
+                        resObject.message = "Success";
+                        resObject.statusCode = 200;
+                        callback(error,resObject);
+                    }
+                })
+
+            }
+        });  
     },
 
     getHighestLikes: function(reqbody, callback){
+        var response = {}
+        response.highestLikes = 0;
+        var resObject = {
+            message: "",
+            statusCode: -1,
+            result: []
+        };
 
+        Article.aggregate({
+            $group:{
+                _id:"$author",
+                totalLikes:{
+                    $push:{
+                        $size:"$like"
+                    }
+                }
+            }
+        }).exec(function(error, record){
+             if(error){
+                resObject.message = error;
+                callback(error,resObject);
+            }else if(record.length>0){
+                var arrayLength = record.length;
+                var authorArray= [];
+                var authorObj = {};
+                var authorWithMaxLike = [];
+                var counter = 0;
+
+                _.forEach(record,function(value){
+
+                        authorObj.authorId = value._id;
+                        authorObj.TotalLikes = _.sum(value.totalLikes);
+                        authorArray.push(authorObj);
+                        counter++;
+
+                        if(arrayLength == counter){
+                            
+                            authorWithMaxLike.push(_.maxBy(authorArray, 'TotalLikes'));
+                            var onlyId = [];
+                            console.log(authorArray);
+                            console.log(authorWithMaxLike);
+                            _.forEach(authorWithMaxLike,function(n){
+                                onlyId.push(n.authorId);
+                            });
+                            console.log(onlyId);
+                        
+                           User.find({ _id: onlyId}).exec(function(err,finalRecord){
+                                console.log(finalRecord);
+                                if(err){
+                                    resObject.message = err;
+                                    callback(error,resObject);
+                                }else if(finalRecord.length>0){
+
+                                    
+                                    resObject.message = "Success";
+                                    resObject.statusCode = 200;
+                                    resObject.result = finalRecord;
+                                    callback(error,resObject);
+                                }
+                            });  
+                        }
+
+                })
+                
+            }     
+        });            
     }
-};
+} 
+
 
 module.exports = _.assign(module.exports, exports, model);
