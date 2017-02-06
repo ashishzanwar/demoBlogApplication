@@ -155,63 +155,85 @@ var model = {
             result: []
         };
 
-        Article.aggregate({
-            $group:{
+        Article.aggregate([
+
+            {$group:{
                 _id:"$author",
-                totalLikes:{
+                "count":{
                     $push:{
                         $size:"$like"
                     }
                 }
+            }},
+
+             {$unwind: "$count"},
+
+             {$group:{
+               _id:"$_id",
+                "totalLikes":{
+                    $sum: "$count"
+                }
+            }},        
+
+           {
+                $lookup:{
+                    from: 'users',
+                    localField: '_id', 
+                    foreignField: '_id',
+                    as: "AuthName"
+                }
             }
-        }).exec(function(error, record){
-             if(error){
-                resObject.message = error;
-                callback(error,resObject);
-            }else if(record.length>0){
-                var arrayLength = record.length;
-                var authorArray= [];
-                var authorObj = {};
-                var authorWithMaxLike = [];
-                var counter = 0;
+            
+         ]).sort({"totalLikes":-1}).limit(5).exec(function(error, record){
+            console.log(record);
+            callback(error, record);
+            //  if(error){
+            //     resObject.message = error;
+            //     callback(error,resObject);
+            // }else if(record.length>0){
+            //     var arrayLength = record.length;
+            //     var authorArray= [];
+            //     var authorObj = {};
+            //     var authorWithMaxLike = [];
+            //     var counter = 0;
 
-                _.forEach(record,function(value){
+            //     _.forEach(record,function(value){
 
-                        authorObj.authorId = value._id;
-                        authorObj.TotalLikes = _.sum(value.totalLikes);
-                        authorArray.push(authorObj);
-                        counter++;
+            //             authorObj.authorId = value._id;
+            //             authorObj.TotalLikes = _.sum(value.totalLikes);
+            //             authorArray.push(authorObj);
+            //             counter++;
 
-                        if(arrayLength == counter){
+            //             if(arrayLength == counter){
                             
-                            authorWithMaxLike.push(_.maxBy(authorArray, 'TotalLikes'));
-                            var onlyId = [];
-                            console.log(authorArray);
-                            console.log(authorWithMaxLike);
-                            _.forEach(authorWithMaxLike,function(n){
-                                onlyId.push(n.authorId);
-                            });
-                            console.log(onlyId);
+            //                 authorWithMaxLike.push(_.maxBy(authorArray, 'TotalLikes'));
+            //                 var onlyId = [];
+            //                 console.log(authorArray);
+            //                 console.log(authorWithMaxLike);
+            //                 _.forEach(authorWithMaxLike,function(n){
+            //                     onlyId.push(n.authorId);
+            //                 });
+            //                 console.log(onlyId);
                         
-                           User.find({ _id: onlyId}).exec(function(err,finalRecord){
-                                console.log(finalRecord);
-                                if(err){
-                                    resObject.message = err;
-                                    callback(error,resObject);
-                                }else if(finalRecord.length>0){
+            //                User.find({ "_id": onlyId}).exec(function(err,finalRecord){
+            //                     console.log(finalRecord);
+            //                     if(err){
+            //                         resObject.message = err;
+            //                         callback(error,resObject);
+            //                     }else if(finalRecord.length>0){
 
-                                    
-                                    resObject.message = "Success";
-                                    resObject.statusCode = 200;
-                                    resObject.result = finalRecord;
-                                    callback(error,resObject);
-                                }
-                            });  
-                        }
 
-                })
+            //                         resObject.message = "Success";
+            //                         resObject.statusCode = 200;
+            //                         resObject.result = finalRecord;
+            //                         callback(error,resObject);
+            //                     }
+            //                 });  
+            //             }
+
+            //     })
                 
-            }     
+            // }     
         });            
     }
 } 

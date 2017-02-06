@@ -69,7 +69,8 @@ var schema = new Schema({
         type: String,
         default: "User",
         enum: ['User', 'Admin']
-    }
+    },
+   
 });
 
 schema.plugin(deepPopulate, {

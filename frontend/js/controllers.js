@@ -10,8 +10,12 @@ angular.module('phonecatControllers', ['templateservicemod', 'navigationservice'
         'http://flexslider.woothemes.com/images/kitchen_adventurer_cheesecake_brownie.jpg',
         'http://flexslider.woothemes.com/images/kitchen_adventurer_lemon.jpg',
         'http://flexslider.woothemes.com/images/kitchen_adventurer_donut.jpg',
-        'http://flexslider.woothemes.com/images/kitchen_adventurer_caramel.jpg'
+        'http://flexslider.getnavwoothemes.com/images/kitchen_adventurer_caramel.jpg'
     ];
+
+   
+    $scope.categories = ["All", "Sports", "News", "Entertainment"];
+    $scope.selectedName = "All";
 })
 
 .controller('FormCtrl', function ($scope, TemplateService, NavigationService, $timeout) {
